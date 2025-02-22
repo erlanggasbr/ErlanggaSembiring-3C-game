@@ -104,10 +104,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 if(axisDirection.magnitude >= 0.1)
                 {
-                    float rotationAngle = Mathf.Atan2(axisDirection.x,
-                                    axisDirection.y) * Mathf.Rad2Deg;
-                    float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotationAngle, ref
-                                        _rotationSmoothVelocity, _rotationSmoothTime);
+                    float rotationAngle = Mathf.Atan2(axisDirection.x, axisDirection.y) * Mathf.Rad2Deg;
+                    float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotationAngle, ref _rotationSmoothVelocity, _rotationSmoothTime);
                     transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
                     movementDirection = Quaternion.Euler(0f, rotationAngle, 0f) * Vector3.forward;
                     _rigidbody.AddForce(movementDirection * _speed * Time.deltaTime);
@@ -152,16 +150,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void CheckIsGrounded()
     {
-        _isGrounded = Physics.CheckSphere(_groundDetector.position,
-                        _detectorRadius, _groundLayer);
+        _isGrounded = Physics.CheckSphere(_groundDetector.position, _detectorRadius, _groundLayer);
     }
 
     private void CheckStep()
     {
-        bool isHitLowerStep = Physics.Raycast(_groundDetector.position,
-                                transform.forward, _stepCheckerDistance);
-        bool isHitUpperStep = Physics.Raycast(_groundDetector.position +
-                                _upperStepOffset, transform.forward, _stepCheckerDistance);
+        bool isHitLowerStep = Physics.Raycast(_groundDetector.position, transform.forward, _stepCheckerDistance);
+        bool isHitUpperStep = Physics.Raycast(_groundDetector.position + _upperStepOffset, transform.forward, _stepCheckerDistance);
         if (isHitLowerStep && !isHitUpperStep)
         {
             _rigidbody.AddForce(0, _stepForce * Time.deltaTime, 0);
@@ -189,7 +184,7 @@ public class PlayerMovement : MonoBehaviour
         {
             _playerStance = PlayerStance.Stand;
             _rigidbody.useGravity = true;
-            transform.position -= transform.forward * 1f;
+            transform.position -= transform.forward;
         }
     }
 }

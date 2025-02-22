@@ -9033,8 +9033,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _input: {fileID: 655266452}
   _walkSpeed: 350
-  _sprintSpeed: 450
-  _walkSprintTransition: 30
+  _sprintSpeed: 600
+  _walkSprintTransition: 50
   _rotationSmoothTime: 0.1
   _jumpForce: 10000
   _groundDetector: {fileID: 1444836355}
