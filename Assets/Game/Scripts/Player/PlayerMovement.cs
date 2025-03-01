@@ -61,11 +61,27 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float _climbSpeed;
 
+    //WIP==================================
+    [SerializeField]
+    private GameObject _rightLegDetect;
+    [SerializeField]
+    private GameObject _leftLegDetect;
+    [SerializeField]
+    private float _sideWallCheckerDistance;
+    //=====================================
+
+    //Camera fileds
+    [SerializeField]
+    private Transform _cameraTransform;
+    [SerializeField]
+    private CameraManager _cameraManager;
+
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
         _speed = _walkSpeed;
         _playerStance = PlayerStance.Stand;
+        HideAndLockCursor();
     }
 
     void Start()
@@ -82,7 +98,6 @@ public class PlayerMovement : MonoBehaviour
         CheckIsGrounded();
         CheckStep();
     }
-
     private void OnDestroy()
     {
         _input.OnMoveInput -= Move;
@@ -94,30 +109,51 @@ public class PlayerMovement : MonoBehaviour
 
     private void Move(Vector2 axisDirection)
     {
-        if(axisDirection.magnitude >= 0.1)
-        {
-            Vector3 movementDirection = Vector3.zero;
-            bool isPlayerStanding = _playerStance == PlayerStance.Stand;
-            bool isPlayerClimbing = _playerStance == PlayerStance.Climb;
+        Vector3 movementDirection = Vector3.zero;
+        bool isPlayerStanding = _playerStance == PlayerStance.Stand;
+        bool isPlayerClimbing = _playerStance == PlayerStance.Climb;
 
-            if (isPlayerStanding)
+        if (isPlayerStanding)
+        {
+            switch (_cameraManager.CameraState)
             {
-                if(axisDirection.magnitude >= 0.1)
-                {
-                    float rotationAngle = Mathf.Atan2(axisDirection.x, axisDirection.y) * Mathf.Rad2Deg;
+                case CameraState.ThirdPerson:
+                    float rotationAngle = Mathf.Atan2(axisDirection.x, axisDirection.y) * Mathf.Rad2Deg + _cameraTransform.eulerAngles.y; ;
                     float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, rotationAngle, ref _rotationSmoothVelocity, _rotationSmoothTime);
                     transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
                     movementDirection = Quaternion.Euler(0f, rotationAngle, 0f) * Vector3.forward;
-                    _rigidbody.AddForce(movementDirection * _speed * Time.deltaTime);
-                }
+                    if (axisDirection.magnitude >= 0.1)
+                    {
+                        _rigidbody.AddForce(movementDirection * Time.deltaTime * _speed);
+                    }
+                break;
+                case CameraState.FirstPerson:
+                    transform.rotation = Quaternion.Euler(0f, _cameraTransform.eulerAngles.y, 0f);
+                    Vector3 verticalDirection = axisDirection.y * transform.forward;
+                    Vector3 horizontalDirection = axisDirection.x * transform.right;
+                    movementDirection = verticalDirection + horizontalDirection;
+                    _rigidbody.AddForce(movementDirection * Time.deltaTime * _speed);
+                    break;
+                default:
+                    break;
             }
-            else if (isPlayerClimbing)
+        }
+        else if (isPlayerClimbing)
+        {
+            Vector3 horizontal = axisDirection.x * transform.right;
+            Vector3 vertical = axisDirection.y * transform.up;
+            movementDirection = horizontal + vertical;
+            _rigidbody.AddForce(movementDirection * _climbSpeed * Time.deltaTime);
+
+            //WIP=================================
+            bool rightWall = Physics.Raycast(_rightLegDetect.transform.position, transform.forward, _sideWallCheckerDistance);
+            bool leftWall = Physics.Raycast(_leftLegDetect.transform.position, transform.forward, _sideWallCheckerDistance);
+            if (!rightWall && !leftWall)
             {
-                Vector3 horizontal = axisDirection.x * transform.right;
-                Vector3 vertical = axisDirection.y * transform.up;
-                movementDirection = horizontal + vertical;
-                _rigidbody.AddForce(movementDirection * _climbSpeed * Time.deltaTime);
+                CancelClimb();
             }
+
+            //=====================================
         }
     }
 
@@ -144,7 +180,7 @@ public class PlayerMovement : MonoBehaviour
         if (_isGrounded)
         {
             Vector3 jumpDirection = Vector3.up;
-            _rigidbody.AddForce(jumpDirection * _jumpForce * Time.deltaTime);
+            _rigidbody.AddForce(jumpDirection * _jumpForce);
         }
     }
 
@@ -175,6 +211,8 @@ public class PlayerMovement : MonoBehaviour
             transform.position = hit.point - offset;
             _playerStance = PlayerStance.Climb;
             _rigidbody.useGravity = false;
+            _cameraManager.SetFPSClampedCamera(true, transform.rotation.eulerAngles);
+            _cameraManager.SetTPSFieldOfView(70);
         }
     }
 
@@ -185,6 +223,22 @@ public class PlayerMovement : MonoBehaviour
             _playerStance = PlayerStance.Stand;
             _rigidbody.useGravity = true;
             transform.position -= transform.forward;
+            _cameraManager.SetFPSClampedCamera(false, transform.rotation.eulerAngles);
+            _cameraManager.SetTPSFieldOfView(40);
         }
     }
+
+    private void HideAndLockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    /*
+    private void OnDrawGizmos()
+    {
+        Debug.DrawLine(_rightLegDetect.transform.position , _rightLegDetect.transform.position + (transform.forward*_sideWallCheckerDistance));
+        Debug.DrawLine(_leftLegDetect.transform.position , _leftLegDetect.transform.position + (transform.forward * _sideWallCheckerDistance));
+    }
+    */
 }
