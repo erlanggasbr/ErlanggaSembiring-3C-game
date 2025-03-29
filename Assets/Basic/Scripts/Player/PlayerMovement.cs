@@ -219,7 +219,6 @@ public class PlayerMovement : MonoBehaviour
             Vector3 velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y, _rigidbody.velocity.z);
             _animator.SetFloat("ClimbVelocityX", velocity.magnitude * axisDirection.x);
             _animator.SetFloat("ClimbVelocityY", velocity.magnitude * axisDirection.y);
-            Debug.Log("velocity = "+velocity.magnitude + "axisDirection= "+ axisDirection);
         }
         else if (isPlayerGliding)
         {
@@ -337,7 +336,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 checkerUpPosition = transform.position + (transform.up * 1.3f);
         bool isCantStand = Physics.Raycast(checkerUpPosition, transform.up,
-                                            0.25f, _groundLayer);
+                                            0.5f);
         if (_playerStance == PlayerStance.Stand)
         {
             _playerStance = PlayerStance.Crouch;
